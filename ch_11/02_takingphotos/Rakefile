@@ -5,4 +5,6 @@ Motion::Project::App.setup do |app|
   # Use `rake config' to see complete project settings.
   app.name = '02 takingphotos'
   app.frameworks += %w(MobileCoreServices AssetsLibrary)
+#  app.deployment_target = "4.3"
+  app.deployment_target = '5.1'
 end

@@ -8,44 +8,55 @@ class RootController < UIViewController
     @label.frame = [[0,50],[UIScreen.mainScreen.bounds.size.width,50]]
     view.addSubview(@label)
 
+    @camera_button = UIButton.buttonWithType(UIButtonTypeRoundedRect)
+    @camera_button.frame  = [[50, 20], [200, 50]]
+    @camera_button.setTitle("Click from camera", forState:UIControlStateNormal)
+    @camera_button.addTarget(self, action: :start_gallery, forControlEvents:UIControlEventTouchUpInside)
+
     if camera_available? && takes_photos?
       @label.text = "Camera Good to Move on"
       p @label.text
 
-      controller = UIImagePickerController.alloc.init
-      controller.sourceType = UIImagePickerControllerSourceTypeCamera
-
-      requiredMediaType = KUTTypeImage
-      controller.mediaTypes = [requiredMediaType]
-      controller.allowsEditing = true
-      controller.delegate = self
-
-      self.navigationController.presentModalViewController(controller, animated:true)
+      @image_picker = UIImagePickerController.alloc.init
+      @image_picker.sourceType = UIImagePickerControllerSourceTypeCamera
+      @image_picker.delegate = self
     else
       @label.text = "Camera not Available - Probably run in a simulator"
       p @label.text
     end
+
+    view.addSubview(@camera_button)
+  end
+  
+  def start_gallery
+    self.navigationController.presentModalViewController(@image_picker, animated:true)
   end
 
   # UIImagePickerController Delegate Methods
+=begin
   def imagePickerController(picker, didFinishPickingMediaWithInfo:info)
     p "Picker returned successfully"
-    mediaType = info.objectForKey(UIImagePickerControllerMediaType)
 
     if mediaType.isEqualToString(KUTTypeMovie)
-      video_url = info.objectForKey(UIImagePickerControllerMediaURL)
-      @label.text = "Video located at #{video_url}"
-      p @label.text
     elsif mediaType.isEqualToString(KUTTypeImage)
-      metadata = info.objectForKey(UIImagePickerControllerMediaMetadata)
-      the_image = info.objectForKey(UIImagePickerControllerOriginalImage)
-
+      
       @label.text = "Image = #{the_image}"
       p "Image Metadata = #{metadata}"
       p @label.text 
     end
 
     picker.dismissModalViewControllerAnimated(true)
+  end
+=end
+
+  #Tells the delegate that the user picked a still image or movie.
+  def imagePickerController(picker, didFinishPickingImage:image, editingInfo:info)
+    self.dismissModalViewControllerAnimated(true)
+    @image_view.removeFromSuperview if @image_view
+    @image_view = UIImageView.alloc.initWithImage(image)
+    @image_view.frame = [[50, 200], [200, 180]]
+    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+    view.addSubview(@image_view)
   end
 
   def imagePickerControllerDidCancel(picker)
@@ -60,7 +71,6 @@ class RootController < UIViewController
 
   def cameraSupportsMedia paramMediaType, paramSourceType
     availableMediaTypes = UIImagePickerController.availableMediaTypesForSourceType(paramSourceType)
-
     availableMediaTypes.include? paramMediaType
   end
 
@@ -87,6 +97,4 @@ class RootController < UIViewController
   def rear_camera_flash?
     UIImagePickerController.isFlashAvailableForCameraDevice UIImagePickerControllerCameraDeviceRear 
   end
-
-
 end
