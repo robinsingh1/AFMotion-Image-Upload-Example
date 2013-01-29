@@ -2,7 +2,14 @@ class RootController < UIViewController
   def viewDidLoad
     super
     view.backgroundColor = UIColor.lightGrayColor
-   
+    url='http://guarded-reef-8330.herokuapp.com/' 
+    url = "http://localhost:3000"
+
+    @client = AFMotion::Client.build(url) do
+      header "Accept", "application/json"; 
+      operation :json
+    end
+
     @label = UILabel.new
     @label.text = 'Camera'
     @label.frame = [[0,50],[UIScreen.mainScreen.bounds.size.width,50]]
@@ -12,6 +19,11 @@ class RootController < UIViewController
     @camera_button.frame  = [[50, 20], [200, 50]]
     @camera_button.setTitle("Click from camera", forState:UIControlStateNormal)
     @camera_button.addTarget(self, action: :start_gallery, forControlEvents:UIControlEventTouchUpInside)
+
+    @upload = UIButton.buttonWithType(UIButtonTypeRoundedRect)
+    @upload.frame  = [[50, 120], [200, 50]]
+    @upload.setTitle("Click from camera", forState:UIControlStateNormal)
+    @upload.addTarget(self, action: :upload_image, forControlEvents:UIControlEventTouchUpInside)
 
     if camera_available? && takes_photos?
       @label.text = "Camera Good to Move on"
@@ -26,28 +38,13 @@ class RootController < UIViewController
     end
 
     view.addSubview(@camera_button)
+    view.addSubview(@upload)
+    view.addSubview(@image)
   end
   
   def start_gallery
     self.navigationController.presentModalViewController(@image_picker, animated:true)
   end
-
-  # UIImagePickerController Delegate Methods
-=begin
-  def imagePickerController(picker, didFinishPickingMediaWithInfo:info)
-    p "Picker returned successfully"
-
-    if mediaType.isEqualToString(KUTTypeMovie)
-    elsif mediaType.isEqualToString(KUTTypeImage)
-      
-      @label.text = "Image = #{the_image}"
-      p "Image Metadata = #{metadata}"
-      p @label.text 
-    end
-
-    picker.dismissModalViewControllerAnimated(true)
-  end
-=end
 
   #Tells the delegate that the user picked a still image or movie.
   def imagePickerController(picker, didFinishPickingImage:image, editingInfo:info)
@@ -56,6 +53,7 @@ class RootController < UIViewController
     @image_view = UIImageView.alloc.initWithImage(image)
     @image_view.frame = [[50, 200], [200, 180]]
     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+    upload_image(image)
     view.addSubview(@image_view)
   end
 
@@ -63,6 +61,26 @@ class RootController < UIViewController
     @label.text = "Picker was cancelled"
     p @label.text
     picker.dismissModalViewControllerAnimated(true)
+  end
+
+  def upload_image#(image)
+    image = UIImage.imageNamed('yay.jpg')
+    data = UIImageJPEGRepresentation(image,1.0)
+    @client.multipart.post("receipts") do |result, form_data, progress|
+      if form_data
+        form_data.appendPartWithFileData(data, name: "receipt", fileName:"yay.jpg", mimeType: "image/jpeg")
+      elsif progress
+        p progress
+=begin
+      elsif result.success?
+        p 'success'
+      elsif result.failure?
+        'failed'
+=end
+      else
+        'wtf'
+      end
+    end
   end
 
   def camera_available?

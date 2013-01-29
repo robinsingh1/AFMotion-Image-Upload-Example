@@ -1,5 +1,7 @@
 $:.unshift("/Library/RubyMotion/lib")
 require 'motion/project'
+require 'bundler'
+Bundler.require
 
 Motion::Project::App.setup do |app|
   # Use `rake config' to see complete project settings.
@@ -7,4 +9,7 @@ Motion::Project::App.setup do |app|
   app.frameworks += %w(MobileCoreServices AssetsLibrary)
 #  app.deployment_target = "4.3"
   app.deployment_target = '5.1'
+  app.pods do 
+    pod 'AFNetworking'
+  end
 end
